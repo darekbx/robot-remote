@@ -66,10 +66,8 @@ class Remote(context: Context) : BleManager<BleManagerCallbacks>(context) {
             setNotificationCallback(notifyCharacteristic)
                 .with { device, data -> onData?.invoke(data) }
             enableNotifications(notifyCharacteristic).enqueue()
-        }
 
-        override fun onDeviceReady() {
-            super.onDeviceReady()
+
         }
     }
 }
