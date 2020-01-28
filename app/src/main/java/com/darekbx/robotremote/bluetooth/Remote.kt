@@ -1,12 +1,12 @@
 package com.darekbx.robotremote.bluetooth
 
 import android.bluetooth.BluetoothGatt
+import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.BleManagerCallbacks
-import java.util.*
-import android.bluetooth.BluetoothGattCharacteristic
 import no.nordicsemi.android.ble.data.Data
+import java.util.*
 
 class Remote(context: Context) : BleManager<BleManagerCallbacks>(context) {
 
@@ -50,12 +50,13 @@ class Remote(context: Context) : BleManager<BleManagerCallbacks>(context) {
                 val properties = notifyCharacteristic.getProperties()
                 notifyValid = (properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0
             }
+            notifyValid = true
 
             var writeRequestValid = false
             writeCharacteristic?.let { writeCharacteristic->
                 val properties = writeCharacteristic.getProperties()
                 writeRequestValid = (properties and BluetoothGattCharacteristic.PROPERTY_WRITE) != 0
-                writeCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT)
+                writeCharacteristic.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE)
             }
 
             return notifyValid && writeRequestValid
