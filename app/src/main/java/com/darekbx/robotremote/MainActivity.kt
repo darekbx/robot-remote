@@ -3,11 +3,13 @@ package com.darekbx.robotremote
 import android.bluetooth.BluetoothDevice
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.darekbx.robotremote.bluetooth.DevicesScanner
 import com.darekbx.robotremote.bluetooth.Remote
 import kotlinx.android.synthetic.main.activity_main.*
+import no.nordicsemi.android.ble.BleManagerCallbacks
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), BleManagerCallbacks{
 
     companion object {
         val DEVICE_NAME = "Cosmose Robot #1"
@@ -20,7 +22,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        devicesScanner = DevicesScanner { onDevice(it) }
+        devicesScanner = DevicesScanner {
+            onDevice(it)
+            devicesScanner.stop()
+        }
             .apply {
                 state_text.setText("Scanning...")
                 scan()
@@ -34,6 +39,7 @@ class MainActivity : AppCompatActivity() {
                     state_text.setText("Data: '${data.getStringValue(0) ?: "Null"}'")
                 }
             }
+            setGattCallbacks(this@MainActivity)
         }
 
         start_button.setOnClickListener { sendAction("start") }
@@ -41,6 +47,8 @@ class MainActivity : AppCompatActivity() {
         left_action.setOnClickListener { sendAction("left") }
         right_action.setOnClickListener { sendAction("right") }
         device_name.setText(DEVICE_NAME)
+
+        setButtonsState(false)
     }
 
     override fun onDestroy() {
@@ -58,10 +66,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onDevice(bluetoothDevice: BluetoothDevice) {
-        if (bluetoothDevice.name.equals(DEVICE_NAME, true)) {
+        if (bluetoothDevice.name != null && bluetoothDevice.name.trim().equals(DEVICE_NAME, true)) {
             state_text.setText("Device found")
             devicesScanner.stop()
-            connectToDevice(bluetoothDevice)
+            stop_button.postDelayed({ connectToDevice(bluetoothDevice) }, 1000)
         }
     }
 
@@ -91,5 +99,49 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             state_text.setText("Action failed: $state")
         }
+    }
+
+    override fun onDeviceDisconnecting(device: BluetoothDevice) {
+        setButtonsState(false)
+        Log.v("---------", "onDeviceDisconnecting")
+    }
+
+    override fun onDeviceDisconnected(device: BluetoothDevice) {
+        setButtonsState(false)
+        Log.v("---------", "onDeviceDisconnected")
+    }
+
+    override fun onDeviceConnected(device: BluetoothDevice) {
+        setButtonsState(true)
+    }
+
+    override fun onDeviceNotSupported(device: BluetoothDevice) {
+    }
+
+    override fun onBondingFailed(device: BluetoothDevice) {
+    }
+
+    override fun onServicesDiscovered(device: BluetoothDevice, optionalServicesFound: Boolean) {
+    }
+
+    override fun onBondingRequired(device: BluetoothDevice) {
+    }
+
+    override fun onLinkLossOccurred(device: BluetoothDevice) {
+    }
+
+    override fun onBonded(device: BluetoothDevice) {
+    }
+
+    override fun onDeviceReady(device: BluetoothDevice) {
+        setButtonsState(true)
+    }
+
+    override fun onError(device: BluetoothDevice, message: String, errorCode: Int) {
+        setButtonsState(false)
+        Log.v("---------", "onError $message $errorCode")
+    }
+
+    override fun onDeviceConnecting(device: BluetoothDevice) {
     }
 }
